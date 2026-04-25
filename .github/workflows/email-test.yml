@@ -1,0 +1,29 @@
+name: Test Email Notification
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-email:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send test email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "Hilton Reward Bot email test"
+          to: ${{ secrets.EMAIL_TO || secrets.EMAIL_USERNAME }}
+          from: Hilton Reward Bot
+          body: |
+            This is a test email from the Hilton Reward Bot workflow.
+
+            If you received this, EMAIL_USERNAME and EMAIL_PASSWORD are working.
+
+            Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
