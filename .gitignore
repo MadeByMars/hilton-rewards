@@ -1,0 +1,17 @@
+# Runtime output
+debug/
+results/
+
+# Local Chrome/CDP profiles
+browser-profile/
+chrome-cdp-profile/
+tmp-cdp-test-profile/
+hilton-cdp-*/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# macOS
+.DS_Store
