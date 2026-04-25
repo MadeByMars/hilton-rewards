@@ -4,9 +4,9 @@ Small Python scraper for checking Hilton flexible-date award availability.
 It is currently tuned for Conrad Bora Bora Nui (`PPTBNCI`), but the hotel code
 can be changed in `SEARCHES`.
 
-The script launches your local Google Chrome with a temporary Chrome DevTools
-Protocol profile, opens Hilton's flexible-date calendar, captures the calendar
-JSON responses, and prints reward availability for the configured target dates.
+The script launches Google Chrome with a temporary Chrome DevTools Protocol
+profile, opens Hilton's flexible-date calendar, captures the calendar JSON
+responses, and prints reward availability for the configured target dates.
 
 ## Setup
 
@@ -16,13 +16,15 @@ Install the Python dependency:
 python3 -m pip install -r requirements.txt
 ```
 
-The script expects Google Chrome at:
+Locally, the script looks for Google Chrome at:
 
 ```text
 /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
 ```
 
-If Chrome is somewhere else, set `chrome_path` in a search config.
+It also checks common Linux Chrome/Chromium paths and the `CHROME_PATH`
+environment variable. If Chrome is somewhere else, set `chrome_path` in a
+search config.
 
 ## Configure Searches
 
@@ -71,6 +73,40 @@ python3 hilton_award_finder.py
 The script prints a table for each configured search and writes parsed JSON to
 `results/`.
 
+## GitHub Actions
+
+The workflow in `.github/workflows/hilton.yml` runs the search automatically
+every 30 minutes and can also be triggered manually from the GitHub Actions UI.
+
+### Enable Actions
+
+1. Open the repo on GitHub.
+2. Go to **Actions**.
+3. Enable workflows if GitHub asks for confirmation.
+
+### Email Notifications
+
+The workflow sends email only when standard room rewards are found.
+
+Add these repository secrets under **Settings** -> **Secrets and variables** ->
+**Actions**:
+
+- `EMAIL_USERNAME`: Gmail address used to send email.
+- `EMAIL_PASSWORD`: Gmail app password.
+- `EMAIL_TO`: optional recipient address. If omitted, `EMAIL_USERNAME` is used.
+
+Manual run:
+
+```text
+Actions -> Hilton Reward Search -> Run workflow
+```
+
+The workflow uploads `results/` and `debug/` as a run artifact for inspection.
+
+GitHub-hosted runners use data-center IPs, so Hilton may occasionally block or
+challenge a run even when the local script works. Check the uploaded debug
+artifact if a scheduled run captures no rewards.
+
 ## Output
 
 Generated files are intentionally ignored by git:
@@ -81,3 +117,20 @@ Generated files are intentionally ignored by git:
 
 If Hilton changes the page or blocks a run, check the files in `debug/` for the
 captured page state and network diagnostics.
+
+## Project Structure
+
+```text
+.
+├── hilton_award_finder.py          # Main scraper script
+├── requirements.txt                # Python dependencies
+├── README.md
+├── .gitignore
+├── .github/
+│   ├── workflows/
+│   │   └── hilton.yml              # Scheduled/manual GitHub Actions workflow
+│   └── scripts/
+│       └── summarize.py            # Workflow result summary and email body
+├── results/                        # Generated parsed output, ignored by git
+└── debug/                          # Generated diagnostics, ignored by git
+```

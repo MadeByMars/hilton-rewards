@@ -1,0 +1,88 @@
+name: Hilton Reward Search
+
+on:
+  # Run every 30 minutes.
+  schedule:
+    - cron: "*/30 * * * *"
+
+  # Allow manual runs from the GitHub Actions UI.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hilton-reward-search
+  cancel-in-progress: true
+
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Set up Chrome
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v2
+        with:
+          chrome-version: stable
+          install-dependencies: true
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+
+      - name: Show Chrome version
+        run: ${{ steps.setup-chrome.outputs.chrome-path }} --version
+
+      - name: Run Hilton search
+        env:
+          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+          PYTHONUNBUFFERED: "1"
+        run: |
+          xvfb-run --auto-servernum --server-args="-screen 0 1440x1200x24" \
+            python3 hilton_award_finder.py
+
+      - name: Display results and check for standard rewards
+        id: summary
+        if: always()
+        run: python .github/scripts/summarize.py
+
+      - name: Upload search artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hilton-award-results
+          path: |
+            results/
+            debug/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Send email notification
+        if: steps.summary.outputs.has_standard_rewards == 'true'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "Hilton standard rewards found (${{ steps.summary.outputs.standard_count }})"
+          to: ${{ secrets.EMAIL_TO || secrets.EMAIL_USERNAME }}
+          from: Hilton Reward Bot
+          body: |
+            ${{ steps.summary.outputs.CONTENT }}
+            ---
+            Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

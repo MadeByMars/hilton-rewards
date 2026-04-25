@@ -36,7 +36,39 @@ RESULTS_DIR = "results"
 DEFAULT_HOTEL = "PPTBNCI"
 DEFAULT_STANDARD_MAX_POINTS = 120_000
 DEFAULT_DEBUG_DIR = "debug"
-DEFAULT_CHROME_PATH = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+
+
+def detect_chrome_path() -> str:
+    env_path = os.environ.get("CHROME_PATH")
+    if env_path:
+        return env_path
+
+    known_paths = [
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        "/usr/bin/google-chrome",
+        "/usr/bin/google-chrome-stable",
+        "/usr/bin/chromium",
+        "/usr/bin/chromium-browser",
+    ]
+    for path in known_paths:
+        if os.path.exists(path):
+            return path
+
+    for executable in (
+        "google-chrome",
+        "google-chrome-stable",
+        "chrome",
+        "chromium",
+        "chromium-browser",
+    ):
+        path = shutil.which(executable)
+        if path:
+            return path
+
+    return known_paths[0]
+
+
+DEFAULT_CHROME_PATH = detect_chrome_path()
 
 os.environ.setdefault("NODE_NO_WARNINGS", "1")
 
@@ -580,8 +612,16 @@ async def fetch_hilton_rewards_cdp(
         f"--window-position={40 + (window_index * 90)},{40 + (window_index * 60)}",
         "--no-first-run",
         "--no-default-browser-check",
-        "about:blank",
     ]
+    if os.environ.get("CI"):
+        command.extend(
+            [
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--no-sandbox",
+            ]
+        )
+    command.append("about:blank")
     process = subprocess.Popen(
         command,
         stdout=subprocess.PIPE,
