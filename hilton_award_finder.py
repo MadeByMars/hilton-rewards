@@ -83,33 +83,17 @@ SEARCHES = [
         "hotel": "PPTBNCI",
         # Hilton flexible dates returns availability for the month containing
         # this arrival date.
-        "arrival": "2026-09-01",
-        # Leave empty to inspect the whole returned month.
-        "target_dates": ["2026-09-10", "2026-09-11"],
-        "nights": 1,
+        "arrival": "2026-09-05",
+        # This checks the exact 5-night stay from 2026-09-05 to 2026-09-10.
+        "target_dates": ["2026-09-05"],
+        "nights": 5,
         "adults": 1,
         "locale": "en",
         "standard_only": True,
         "standard_max_points": 200_000,
         "debug_dir": DEFAULT_DEBUG_DIR,
         "timeout": 45,
-        # Leave as None for a fresh temporary Chrome profile on each run.
-        "cdp_user_data_dir": CDP_USER_DATA_DIR,
-    },
-    {
-        "hotel": "PPTBNCI",
-        # Hilton flexible dates returns availability for the month containing
-        # this arrival date.
-        "arrival": "2026-09-01",
-        # Leave empty to inspect the whole returned month.
-        "target_dates": ["2026-09-10"],
-        "nights": 2,
-        "adults": 1,
-        "locale": "en",
-        "standard_only": True,
-        "standard_max_points": 200_000,
-        "debug_dir": DEFAULT_DEBUG_DIR,
-        "timeout": 45,
+        "label": "pptbnci-2026-09-05-5n",
         # Leave as None for a fresh temporary Chrome profile on each run.
         "cdp_user_data_dir": CDP_USER_DATA_DIR,
     },

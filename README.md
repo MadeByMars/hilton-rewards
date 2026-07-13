@@ -36,9 +36,9 @@ Example:
 SEARCHES = [
     {
         "hotel": "PPTBNCI",
-        "arrival": "2026-09-01",
-        "target_dates": ["2026-09-10", "2026-09-11"],
-        "nights": 1,
+        "arrival": "2026-09-05",
+        "target_dates": ["2026-09-05"],
+        "nights": 5,
         "adults": 1,
         "locale": "en",
         "standard_only": True,
@@ -47,7 +47,7 @@ SEARCHES = [
         "timeout": 45,
         "cdp_user_data_dir": None,
         # Optional: set a stable label for output/debug artifact names.
-        # "label": "pptbnci-sep10-1n",
+        "label": "pptbnci-2026-09-05-5n",
     },
 ]
 ```
@@ -56,6 +56,8 @@ Notes:
 
 - `arrival` anchors the Hilton flexible-date month that will be loaded.
 - `target_dates` controls which dates are printed from that returned month.
+- For an exact 5-night stay from 2026-09-05 to 2026-09-10, use
+  `arrival="2026-09-05"`, `nights=5`, and `target_dates=["2026-09-05"]`.
 - Leave `target_dates` empty to inspect the whole month.
 - `standard_only=True` still prints all target dates, then summarizes standard
   room reward count and the lowest available reward.
