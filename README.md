@@ -61,10 +61,24 @@ Notes:
 - Leave `target_dates` empty to inspect the whole month.
 - `standard_only=True` still prints all target dates, then summarizes standard
   room reward count and the lowest available reward.
-- Multiple entries in `SEARCHES` run concurrently.
+- Multiple entries in `SEARCHES` run sequentially by default for Chrome/CDP
+  reliability. Increase `MAX_CONCURRENT_SEARCHES` only if your environment can
+  launch multiple Chrome instances cleanly.
 - Each search gets a unique generated label unless you provide `label`; debug
   artifacts use that label so searches for the same hotel/month do not overwrite
   each other.
+- Use `alert_group` and `alert_required_dates` when an email should only be sent
+  after a full set of dates is available. The LIRGUWA holiday search uses this
+  because the 2026-12-28 to 2027-01-02 stay crosses a month boundary and must be
+  split into December and January flexible-date searches.
+
+## Current Searches
+
+- `PPTBNCI`: Conrad Bora Bora Nui, 5-night stay from 2026-09-05 to 2026-09-10.
+- `LIRGUWA`: Waldorf Astoria Costa Rica Punta Cacique, one-night standard reward
+  checks for 2026-12-28, 2026-12-29, 2026-12-30, 2026-12-31, and 2027-01-01.
+  Email notification is sent only if all five required nights are standard
+  rewards.
 
 ## Run
 
@@ -88,7 +102,10 @@ every 30 minutes and can also be triggered manually from the GitHub Actions UI.
 
 ### Email Notifications
 
-The workflow sends email only when standard room rewards are found.
+The workflow sends email when an alert condition is met. Standalone searches
+alert when a configured target date has a standard reward. Grouped searches,
+such as the LIRGUWA holiday search, alert only when all required dates in the
+group have standard rewards.
 
 Add these repository secrets under **Settings** -> **Secrets and variables** ->
 **Actions**:

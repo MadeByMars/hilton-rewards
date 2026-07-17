@@ -75,9 +75,19 @@ os.environ.setdefault("NODE_NO_WARNINGS", "1")
 
 RUN_CDP_SEARCHES = True
 CDP_USER_DATA_DIR = None
+MAX_CONCURRENT_SEARCHES = 1
 
 
-# Define searches here. Each configured search runs concurrently.
+# Define searches here. By default, CDP searches run sequentially because
+# launching multiple full Chrome instances at once can race DevTools startup.
+LIRGUWA_HOLIDAY_DATES = [
+    "2026-12-28",
+    "2026-12-29",
+    "2026-12-30",
+    "2026-12-31",
+    "2027-01-01",
+]
+
 SEARCHES = [
     {
         "hotel": "PPTBNCI",
@@ -94,6 +104,47 @@ SEARCHES = [
         "debug_dir": DEFAULT_DEBUG_DIR,
         "timeout": 45,
         "label": "pptbnci-2026-09-05-5n",
+        # Leave as None for a fresh temporary Chrome profile on each run.
+        "cdp_user_data_dir": CDP_USER_DATA_DIR,
+    },
+    {
+        "hotel": "LIRGUWA",
+        # December part of the 1-night checks for 2026-12-28 to 2027-01-02.
+        "arrival": "2026-12-28",
+        "target_dates": [
+            "2026-12-28",
+            "2026-12-29",
+            "2026-12-30",
+            "2026-12-31",
+        ],
+        "nights": 1,
+        "adults": 1,
+        "locale": "en",
+        "standard_only": True,
+        "standard_max_points": DEFAULT_STANDARD_MAX_POINTS,
+        "debug_dir": DEFAULT_DEBUG_DIR,
+        "timeout": 45,
+        "label": "lirguwa-2026-12-28-to-2027-01-02-dec",
+        "alert_group": "lirguwa-2026-12-28-to-2027-01-02",
+        "alert_required_dates": LIRGUWA_HOLIDAY_DATES,
+        # Leave as None for a fresh temporary Chrome profile on each run.
+        "cdp_user_data_dir": CDP_USER_DATA_DIR,
+    },
+    {
+        "hotel": "LIRGUWA",
+        # January part of the same 5-night alert group.
+        "arrival": "2027-01-01",
+        "target_dates": ["2027-01-01"],
+        "nights": 1,
+        "adults": 1,
+        "locale": "en",
+        "standard_only": True,
+        "standard_max_points": DEFAULT_STANDARD_MAX_POINTS,
+        "debug_dir": DEFAULT_DEBUG_DIR,
+        "timeout": 45,
+        "label": "lirguwa-2026-12-28-to-2027-01-02-jan",
+        "alert_group": "lirguwa-2026-12-28-to-2027-01-02",
+        "alert_required_dates": LIRGUWA_HOLIDAY_DATES,
         # Leave as None for a fresh temporary Chrome profile on each run.
         "cdp_user_data_dir": CDP_USER_DATA_DIR,
     },
@@ -160,6 +211,8 @@ class HiltonSearchResult:
     raw_response_count: int = 0
     response_log: list[dict[str, Any]] = field(default_factory=list)
     search_label: Optional[str] = None
+    alert_group: Optional[str] = None
+    alert_required_dates: list[str] = field(default_factory=list)
     debug_prefix: Optional[str] = None
     page_title: Optional[str] = None
     error: Optional[str] = None
@@ -614,7 +667,7 @@ async def fetch_hilton_rewards_cdp(
     )
 
     try:
-        wait_for_cdp(port, process=process, timeout_seconds=10)
+        wait_for_cdp(port, process=process, timeout_seconds=min(timeout_seconds, 30))
 
         async with async_playwright() as playwright:
             browser = await playwright.chromium.connect_over_cdp(
@@ -823,6 +876,8 @@ async def run_cdp_search(
     )
     result.target_dates = target_dates
     result.search_label = search_label
+    result.alert_group = search.get("alert_group")
+    result.alert_required_dates = search.get("alert_required_dates", [])
     return result
 
 
@@ -845,9 +900,20 @@ async def main() -> None:
         return
 
     print(f"Starting Chrome CDP Hilton search for {len(SEARCHES)} configured search(es).")
-    results = await asyncio.gather(
-        *(run_cdp_search(search, index) for index, search in enumerate(SEARCHES))
-    )
+    if MAX_CONCURRENT_SEARCHES <= 1:
+        results = []
+        for index, search in enumerate(SEARCHES):
+            results.append(await run_cdp_search(search, index))
+    else:
+        semaphore = asyncio.Semaphore(MAX_CONCURRENT_SEARCHES)
+
+        async def run_limited_search(index: int, search: dict[str, Any]) -> HiltonSearchResult:
+            async with semaphore:
+                return await run_cdp_search(search, index)
+
+        results = await asyncio.gather(
+            *(run_limited_search(index, search) for index, search in enumerate(SEARCHES))
+        )
     output_file = save_results(results, RESULTS_DIR)
 
     for search, result in zip(SEARCHES, results):
