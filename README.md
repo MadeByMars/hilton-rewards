@@ -1,8 +1,8 @@
 # Hilton Award Finder
 
 Small Python scraper for checking Hilton flexible-date award availability.
-It is currently tuned for Conrad Bora Bora Nui (`PPTBNCI`), but the hotel code
-can be changed in `SEARCHES`.
+It is currently tuned for Waldorf Astoria Costa Rica Punta Cacique (`LIRGUWA`),
+but the hotel code can be changed in `SEARCHES`.
 
 The script launches Google Chrome with a temporary Chrome DevTools Protocol
 profile, opens Hilton's flexible-date calendar, captures the calendar JSON
@@ -33,31 +33,20 @@ Edit `SEARCHES` in `hilton_award_finder.py`.
 Example:
 
 ```python
-SEARCHES = [
-    {
-        "hotel": "PPTBNCI",
-        "arrival": "2026-09-05",
-        "target_dates": ["2026-09-05"],
-        "nights": 5,
-        "adults": 1,
-        "locale": "en",
-        "standard_only": True,
-        "standard_max_points": 200_000,
-        "debug_dir": "debug",
-        "timeout": 45,
-        "cdp_user_data_dir": None,
-        # Optional: set a stable label for output/debug artifact names.
-        "label": "pptbnci-2026-09-05-5n",
-    },
-]
+SEARCHES = build_segment_searches(
+    hotel="LIRGUWA",
+    stay_start="2026-12-28",
+    stay_end="2027-01-02",
+    alert_group="lirguwa-2026-12-28-to-2027-01-02",
+)
 ```
 
 Notes:
 
 - `arrival` anchors the Hilton flexible-date month that will be loaded.
 - `target_dates` controls which dates are printed from that returned month.
-- For an exact 5-night stay from 2026-09-05 to 2026-09-10, use
-  `arrival="2026-09-05"`, `nights=5`, and `target_dates=["2026-09-05"]`.
+- `build_segment_searches` enumerates every valid 1-, 2-, 3-, 4-, and 5-night
+  stay segment inside the requested stay window.
 - Leave `target_dates` empty to inspect the whole month.
 - `standard_only=True` still prints all target dates, then summarizes standard
   room reward count and the lowest available reward.
@@ -68,17 +57,15 @@ Notes:
   artifacts use that label so searches for the same hotel/month do not overwrite
   each other.
 - Use `alert_group` and `alert_required_dates` when an email should only be sent
-  after a full set of dates is available. The LIRGUWA holiday search uses this
-  because the 2026-12-28 to 2027-01-02 stay crosses a month boundary and must be
-  split into December and January flexible-date searches.
+  after a full stay can be covered. The LIRGUWA holiday search uses this to find
+  any non-overlapping combination of standard reward segments that covers
+  2026-12-28 to 2027-01-02.
 
 ## Current Searches
 
-- `PPTBNCI`: Conrad Bora Bora Nui, 5-night stay from 2026-09-05 to 2026-09-10.
-- `LIRGUWA`: Waldorf Astoria Costa Rica Punta Cacique, one-night standard reward
-  checks for 2026-12-28, 2026-12-29, 2026-12-30, 2026-12-31, and 2027-01-01.
-  Email notification is sent only if all five required nights are standard
-  rewards.
+- `LIRGUWA`: Waldorf Astoria Costa Rica Punta Cacique, 2026-12-28 to
+  2027-01-02. The script searches all valid 1- through 5-night standard reward
+  segments and emails if any combination covers the full 5-night stay.
 
 ## Run
 
@@ -104,8 +91,8 @@ every 30 minutes and can also be triggered manually from the GitHub Actions UI.
 
 The workflow sends email when an alert condition is met. Standalone searches
 alert when a configured target date has a standard reward. Grouped searches,
-such as the LIRGUWA holiday search, alert only when all required dates in the
-group have standard rewards.
+such as the LIRGUWA holiday search, alert only when standard reward segments can
+be combined into a complete stay with no gaps.
 
 Add these repository secrets under **Settings** -> **Secrets and variables** ->
 **Actions**:

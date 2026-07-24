@@ -80,83 +80,81 @@ MAX_CONCURRENT_SEARCHES = 1
 
 # Define searches here. By default, CDP searches run sequentially because
 # launching multiple full Chrome instances at once can race DevTools startup.
-LIRGUWA_HOLIDAY_DATES = [
-    "2026-12-28",
-    "2026-12-29",
-    "2026-12-30",
-    "2026-12-31",
-    "2027-01-01",
-]
+LIRGUWA_STAY_START = "2026-12-28"
+LIRGUWA_STAY_END = "2027-01-02"
+LIRGUWA_ALERT_GROUP = "lirguwa-2026-12-28-to-2027-01-02"
 
-SEARCHES = [
-    {
-        "hotel": "PPTBNCI",
-        # Hilton flexible dates returns availability for the month containing
-        # this arrival date.
-        "arrival": "2026-09-05",
-        # This checks the exact 5-night stay from 2026-09-05 to 2026-09-10.
-        "target_dates": ["2026-09-05"],
-        "nights": 5,
-        "adults": 1,
-        "locale": "en",
-        "standard_only": True,
-        "standard_max_points": 200_000,
-        "debug_dir": DEFAULT_DEBUG_DIR,
-        "timeout": 45,
-        "label": "pptbnci-2026-09-05-5n",
-        # Leave as None for a fresh temporary Chrome profile on each run.
-        "cdp_user_data_dir": CDP_USER_DATA_DIR,
-    },
-    {
-        "hotel": "LIRGUWA",
-        # December part of the 1-night checks for 2026-12-28 to 2027-01-02.
-        "arrival": "2026-12-28",
-        "target_dates": [
-            "2026-12-28",
-            "2026-12-29",
-            "2026-12-30",
-            "2026-12-31",
-        ],
-        "nights": 1,
-        "adults": 1,
-        "locale": "en",
-        "standard_only": True,
-        "standard_max_points": DEFAULT_STANDARD_MAX_POINTS,
-        "debug_dir": DEFAULT_DEBUG_DIR,
-        "timeout": 45,
-        "label": "lirguwa-2026-12-28-to-2027-01-02-dec",
-        "alert_group": "lirguwa-2026-12-28-to-2027-01-02",
-        "alert_required_dates": LIRGUWA_HOLIDAY_DATES,
-        # Leave as None for a fresh temporary Chrome profile on each run.
-        "cdp_user_data_dir": CDP_USER_DATA_DIR,
-    },
-    {
-        "hotel": "LIRGUWA",
-        # January part of the same 5-night alert group.
-        "arrival": "2027-01-01",
-        "target_dates": ["2027-01-01"],
-        "nights": 1,
-        "adults": 1,
-        "locale": "en",
-        "standard_only": True,
-        "standard_max_points": DEFAULT_STANDARD_MAX_POINTS,
-        "debug_dir": DEFAULT_DEBUG_DIR,
-        "timeout": 45,
-        "label": "lirguwa-2026-12-28-to-2027-01-02-jan",
-        "alert_group": "lirguwa-2026-12-28-to-2027-01-02",
-        "alert_required_dates": LIRGUWA_HOLIDAY_DATES,
-        # Leave as None for a fresh temporary Chrome profile on each run.
-        "cdp_user_data_dir": CDP_USER_DATA_DIR,
-    },
-    # Add more searches, for example:
-    # {
-    #     "hotel": "PPTBNCI",
-    #     "arrival": "2026-10-01",
-    #     "nights": 3,
-    #     "adults": 2,
-    #     "standard_only": True,
-    # },
-]
+
+def date_range(start_date: str, end_date: str) -> list[str]:
+    current = datetime.strptime(start_date, "%Y-%m-%d").date()
+    end = datetime.strptime(end_date, "%Y-%m-%d").date()
+    dates: list[str] = []
+    while current < end:
+        dates.append(current.isoformat())
+        current += timedelta(days=1)
+    return dates
+
+
+def build_segment_searches(
+    hotel: str,
+    stay_start: str,
+    stay_end: str,
+    alert_group: str,
+    max_nights: Optional[int] = None,
+    adults: int = 1,
+    standard_max_points: int = DEFAULT_STANDARD_MAX_POINTS,
+) -> list[dict[str, Any]]:
+    start = datetime.strptime(stay_start, "%Y-%m-%d").date()
+    end = datetime.strptime(stay_end, "%Y-%m-%d").date()
+    total_nights = (end - start).days
+    stay_lengths = range(1, (max_nights or total_nights) + 1)
+    required_dates = date_range(stay_start, stay_end)
+    searches: list[dict[str, Any]] = []
+
+    for nights in stay_lengths:
+        month_targets: dict[str, list[str]] = {}
+        latest_start = end - timedelta(days=nights)
+        current = start
+        while current <= latest_start:
+            arrival = current.isoformat()
+            month_targets.setdefault(arrival[:7], []).append(arrival)
+            current += timedelta(days=1)
+
+        for month, target_dates in sorted(month_targets.items()):
+            searches.append(
+                {
+                    "hotel": hotel,
+                    "arrival": target_dates[0],
+                    "target_dates": target_dates,
+                    "nights": nights,
+                    "adults": adults,
+                    "locale": "en",
+                    "standard_only": True,
+                    "standard_max_points": standard_max_points,
+                    "debug_dir": DEFAULT_DEBUG_DIR,
+                    "timeout": 45,
+                    "label": (
+                        f"{hotel.lower()}-{stay_start}-to-{stay_end}-"
+                        f"{nights}n-{month}"
+                    ),
+                    "alert_group": alert_group,
+                    "alert_start": stay_start,
+                    "alert_end": stay_end,
+                    "alert_required_dates": required_dates,
+                    # Leave as None for a fresh temporary Chrome profile on each run.
+                    "cdp_user_data_dir": CDP_USER_DATA_DIR,
+                }
+            )
+
+    return searches
+
+
+SEARCHES = build_segment_searches(
+    hotel="LIRGUWA",
+    stay_start=LIRGUWA_STAY_START,
+    stay_end=LIRGUWA_STAY_END,
+    alert_group=LIRGUWA_ALERT_GROUP,
+)
 
 
 @dataclass
@@ -212,6 +210,8 @@ class HiltonSearchResult:
     response_log: list[dict[str, Any]] = field(default_factory=list)
     search_label: Optional[str] = None
     alert_group: Optional[str] = None
+    alert_start: Optional[str] = None
+    alert_end: Optional[str] = None
     alert_required_dates: list[str] = field(default_factory=list)
     debug_prefix: Optional[str] = None
     page_title: Optional[str] = None
@@ -877,6 +877,8 @@ async def run_cdp_search(
     result.target_dates = target_dates
     result.search_label = search_label
     result.alert_group = search.get("alert_group")
+    result.alert_start = search.get("alert_start")
+    result.alert_end = search.get("alert_end")
     result.alert_required_dates = search.get("alert_required_dates", [])
     return result
 
