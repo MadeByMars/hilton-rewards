@@ -33,11 +33,18 @@ Edit `SEARCHES` in `hilton_award_finder.py`.
 Example:
 
 ```python
-SEARCHES = build_segment_searches(
-    hotel="LIRGUWA",
-    stay_start="2026-12-28",
-    stay_end="2027-01-02",
-    alert_group="lirguwa-2026-12-28-to-2027-01-02",
+SEARCHES = (
+    build_segment_searches(
+        hotel="LIRGUWA",
+        stay_start="2026-12-28",
+        stay_end="2027-01-02",
+        alert_group="lirguwa-2026-12-28-to-2027-01-02",
+    )
+    + build_segment_searches(
+        hotel="SJOTTLX",
+        stay_start="2026-12-28",
+        stay_end="2027-01-02",
+    )
 )
 ```
 
@@ -60,12 +67,16 @@ Notes:
   after a full stay can be covered. The LIRGUWA holiday search uses this to find
   any non-overlapping combination of standard reward segments that covers
   2026-12-28 to 2027-01-02.
+- Omit `alert_group` to email when any configured stay segment has a standard
+  reward. The SJOTTLX holiday search uses this behavior.
 
 ## Current Searches
 
 - `LIRGUWA`: Waldorf Astoria Costa Rica Punta Cacique, 2026-12-28 to
   2027-01-02. The script searches all valid 1- through 5-night standard reward
   segments and emails if any combination covers the full 5-night stay.
+- `SJOTTLX`: 2026-12-28 to 2027-01-02. The script searches every valid 1-, 2-,
+  3-, 4-, and 5-night stay and emails if any one of them has a standard reward.
 
 ## Run
 

@@ -83,6 +83,8 @@ MAX_CONCURRENT_SEARCHES = 1
 LIRGUWA_STAY_START = "2026-12-28"
 LIRGUWA_STAY_END = "2027-01-02"
 LIRGUWA_ALERT_GROUP = "lirguwa-2026-12-28-to-2027-01-02"
+SJOTTLX_STAY_START = "2026-12-28"
+SJOTTLX_STAY_END = "2027-01-02"
 
 
 def date_range(start_date: str, end_date: str) -> list[str]:
@@ -99,7 +101,7 @@ def build_segment_searches(
     hotel: str,
     stay_start: str,
     stay_end: str,
-    alert_group: str,
+    alert_group: Optional[str] = None,
     max_nights: Optional[int] = None,
     adults: int = 1,
     standard_max_points: int = DEFAULT_STANDARD_MAX_POINTS,
@@ -149,11 +151,18 @@ def build_segment_searches(
     return searches
 
 
-SEARCHES = build_segment_searches(
-    hotel="LIRGUWA",
-    stay_start=LIRGUWA_STAY_START,
-    stay_end=LIRGUWA_STAY_END,
-    alert_group=LIRGUWA_ALERT_GROUP,
+SEARCHES = (
+    build_segment_searches(
+        hotel="LIRGUWA",
+        stay_start=LIRGUWA_STAY_START,
+        stay_end=LIRGUWA_STAY_END,
+        alert_group=LIRGUWA_ALERT_GROUP,
+    )
+    + build_segment_searches(
+        hotel="SJOTTLX",
+        stay_start=SJOTTLX_STAY_START,
+        stay_end=SJOTTLX_STAY_END,
+    )
 )
 
 
