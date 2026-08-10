@@ -39,6 +39,7 @@ SEARCHES = (
         stay_start="2026-12-28",
         stay_end="2027-01-02",
         alert_group="lirguwa-2026-12-28-to-2027-01-02",
+        max_nights=4,
     )
     + build_segment_searches(
         hotel="SJOTTLX",
@@ -53,7 +54,8 @@ Notes:
 - `arrival` anchors the Hilton flexible-date month that will be loaded.
 - `target_dates` controls which dates are printed from that returned month.
 - `build_segment_searches` enumerates every valid 1-, 2-, 3-, 4-, and 5-night
-  stay segment inside the requested stay window.
+  stay segment inside the requested stay window by default. Set `max_nights`
+  to use a shorter maximum stay length.
 - Leave `target_dates` empty to inspect the whole month.
 - `standard_only=True` still prints all target dates, then summarizes standard
   room reward count and the lowest available reward.
@@ -73,8 +75,9 @@ Notes:
 ## Current Searches
 
 - `LIRGUWA`: Waldorf Astoria Costa Rica Punta Cacique, 2026-12-28 to
-  2027-01-02. The script searches all valid 1- through 5-night standard reward
-  segments and emails if any combination covers the full 5-night stay.
+  2027-01-02. The script searches all valid 1- through 4-night standard reward
+  segments (excluding 5-night stays) and emails if any combination covers the
+  full 5-night window.
 - `SJOTTLX`: 2026-12-28 to 2027-01-02. The script searches every valid 1-, 2-,
   3-, 4-, and 5-night stay and emails if any one of them has a standard reward.
 

@@ -157,6 +157,7 @@ SEARCHES = (
         stay_start=LIRGUWA_STAY_START,
         stay_end=LIRGUWA_STAY_END,
         alert_group=LIRGUWA_ALERT_GROUP,
+        max_nights=4,
     )
     + build_segment_searches(
         hotel="SJOTTLX",
