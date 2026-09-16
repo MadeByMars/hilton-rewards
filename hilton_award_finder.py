@@ -80,9 +80,6 @@ MAX_CONCURRENT_SEARCHES = 1
 
 # Define searches here. By default, CDP searches run sequentially because
 # launching multiple full Chrome instances at once can race DevTools startup.
-LIRGUWA_STAY_START = "2026-12-28"
-LIRGUWA_STAY_END = "2027-01-02"
-LIRGUWA_ALERT_GROUP = "lirguwa-2026-12-28-to-2027-01-02"
 SJOTTLX_STAY_START = "2026-12-28"
 SJOTTLX_STAY_END = "2027-01-02"
 
@@ -151,19 +148,10 @@ def build_segment_searches(
     return searches
 
 
-SEARCHES = (
-    build_segment_searches(
-        hotel="LIRGUWA",
-        stay_start=LIRGUWA_STAY_START,
-        stay_end=LIRGUWA_STAY_END,
-        alert_group=LIRGUWA_ALERT_GROUP,
-        max_nights=4,
-    )
-    + build_segment_searches(
-        hotel="SJOTTLX",
-        stay_start=SJOTTLX_STAY_START,
-        stay_end=SJOTTLX_STAY_END,
-    )
+SEARCHES = build_segment_searches(
+    hotel="SJOTTLX",
+    stay_start=SJOTTLX_STAY_START,
+    stay_end=SJOTTLX_STAY_END,
 )
 
 

@@ -1,8 +1,8 @@
 # Hilton Award Finder
 
 Small Python scraper for checking Hilton flexible-date award availability.
-It is currently tuned for Waldorf Astoria Costa Rica Punta Cacique (`LIRGUWA`),
-but the hotel code can be changed in `SEARCHES`.
+It is currently configured for `SJOTTLX`, but the hotel code can be changed in
+`SEARCHES`.
 
 The script launches Google Chrome with a temporary Chrome DevTools Protocol
 profile, opens Hilton's flexible-date calendar, captures the calendar JSON
@@ -33,19 +33,10 @@ Edit `SEARCHES` in `hilton_award_finder.py`.
 Example:
 
 ```python
-SEARCHES = (
-    build_segment_searches(
-        hotel="LIRGUWA",
-        stay_start="2026-12-28",
-        stay_end="2027-01-02",
-        alert_group="lirguwa-2026-12-28-to-2027-01-02",
-        max_nights=4,
-    )
-    + build_segment_searches(
-        hotel="SJOTTLX",
-        stay_start="2026-12-28",
-        stay_end="2027-01-02",
-    )
+SEARCHES = build_segment_searches(
+    hotel="SJOTTLX",
+    stay_start="2026-12-28",
+    stay_end="2027-01-02",
 )
 ```
 
@@ -66,18 +57,13 @@ Notes:
   artifacts use that label so searches for the same hotel/month do not overwrite
   each other.
 - Use `alert_group` and `alert_required_dates` when an email should only be sent
-  after a full stay can be covered. The LIRGUWA holiday search uses this to find
-  any non-overlapping combination of standard reward segments that covers
-  2026-12-28 to 2027-01-02.
+  after a full stay can be covered by a non-overlapping combination of standard
+  reward segments.
 - Omit `alert_group` to email when any configured stay segment has a standard
   reward. The SJOTTLX holiday search uses this behavior.
 
 ## Current Searches
 
-- `LIRGUWA`: Waldorf Astoria Costa Rica Punta Cacique, 2026-12-28 to
-  2027-01-02. The script searches all valid 1- through 4-night standard reward
-  segments (excluding 5-night stays) and emails if any combination covers the
-  full 5-night window.
 - `SJOTTLX`: 2026-12-28 to 2027-01-02. The script searches every valid 1-, 2-,
   3-, 4-, and 5-night stay and emails if any one of them has a standard reward.
 
@@ -105,8 +91,8 @@ every 30 minutes and can also be triggered manually from the GitHub Actions UI.
 
 The workflow sends email when an alert condition is met. Standalone searches
 alert when a configured target date has a standard reward. Grouped searches,
-such as the LIRGUWA holiday search, alert only when standard reward segments can
-be combined into a complete stay with no gaps.
+when configured, alert only when standard reward segments can be combined into
+a complete stay with no gaps.
 
 Add these repository secrets under **Settings** -> **Secrets and variables** ->
 **Actions**:
