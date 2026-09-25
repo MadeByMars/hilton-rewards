@@ -1,8 +1,8 @@
 # Hilton Award Finder
 
 Small Python scraper for checking Hilton flexible-date award availability.
-It is currently configured for `SJOTTLX`, but the hotel code can be changed in
-`SEARCHES`.
+It is currently configured for `SJOTTLX` and `PPTBNCI`, but the hotel codes can
+be changed in `SEARCHES`.
 
 The script launches Google Chrome with a temporary Chrome DevTools Protocol
 profile, opens Hilton's flexible-date calendar, captures the calendar JSON
@@ -33,10 +33,22 @@ Edit `SEARCHES` in `hilton_award_finder.py`.
 Example:
 
 ```python
-SEARCHES = build_segment_searches(
-    hotel="SJOTTLX",
-    stay_start="2026-12-28",
-    stay_end="2027-01-02",
+SEARCHES = (
+    build_segment_searches(
+        hotel="SJOTTLX",
+        stay_start="2026-12-28",
+        stay_end="2027-01-02",
+    )
+    + [
+        {
+            "hotel": "PPTBNCI",
+            "arrival": "2027-07-03",
+            "target_dates": ["2027-07-03", "2027-07-04", "2027-07-05"],
+            "nights": 5,
+            "adults": 1,
+            "standard_only": True,
+        }
+    ]
 )
 ```
 
@@ -66,6 +78,8 @@ Notes:
 
 - `SJOTTLX`: 2026-12-28 to 2027-01-02. The script searches every valid 1-, 2-,
   3-, 4-, and 5-night stay and emails if any one of them has a standard reward.
+- `PPTBNCI`: five-night stays arriving 2027-07-03, 2027-07-04, or 2027-07-05
+  for one adult. The script emails if any one has a standard reward.
 
 ## Run
 

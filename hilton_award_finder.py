@@ -82,6 +82,7 @@ MAX_CONCURRENT_SEARCHES = 1
 # launching multiple full Chrome instances at once can race DevTools startup.
 SJOTTLX_STAY_START = "2026-12-28"
 SJOTTLX_STAY_END = "2027-01-02"
+PPTBNCI_ARRIVAL_DATES = ["2027-07-03", "2027-07-04", "2027-07-05"]
 
 
 def date_range(start_date: str, end_date: str) -> list[str]:
@@ -148,10 +149,29 @@ def build_segment_searches(
     return searches
 
 
-SEARCHES = build_segment_searches(
-    hotel="SJOTTLX",
-    stay_start=SJOTTLX_STAY_START,
-    stay_end=SJOTTLX_STAY_END,
+SEARCHES = (
+    build_segment_searches(
+        hotel="SJOTTLX",
+        stay_start=SJOTTLX_STAY_START,
+        stay_end=SJOTTLX_STAY_END,
+    )
+    + [
+        {
+            "hotel": "PPTBNCI",
+            "arrival": PPTBNCI_ARRIVAL_DATES[0],
+            "target_dates": PPTBNCI_ARRIVAL_DATES,
+            "nights": 5,
+            "adults": 1,
+            "locale": "en",
+            "standard_only": True,
+            "standard_max_points": DEFAULT_STANDARD_MAX_POINTS,
+            "debug_dir": DEFAULT_DEBUG_DIR,
+            "timeout": 45,
+            "label": "pptbnci-2027-07-03-or-04-or-05-5n",
+            "alert_group": None,
+            "cdp_user_data_dir": CDP_USER_DATA_DIR,
+        }
+    ]
 )
 
 
